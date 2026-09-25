@@ -1,45 +1,48 @@
-import csv
-import os
 from flask import jsonify
+from db.connect import get_db
+import db.read_txns as read_txns
 
 #  Get the master list of transactions
-def getTransactions():
-    csv_file_path = os.path.join(os.path.dirname(__file__), '../data/prod_transactions.csv')
-    
-    if not os.path.exists(csv_file_path):
-        return jsonify({"status": "error", "message": "CSV file not found"}), 404
-        
+def getTransactions(user_id: str):
     try:
+        # Get the database connection and create a cursor
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Execute your SQL query
+        cursor.execute(read_txns.GET_USER_TRANSACTIONS, {'user_id': user_id})
+        transactions = cursor.fetchall()
         rows_list = []
-        with open(csv_file_path, mode='r', encoding='utf-8') as file:
-            csv_reader = csv.DictReader(file)
-            
-            for row in csv_reader:
-                # Convert the capitalized AMOUNT header to a float safely
-                try:
-                    amount_val = float(row.get('Amount', 0.0))
-                except (ValueError, TypeError):
-                    amount_val = 0.0  # Fallback if data is corrupted or missing
 
-                # Build the structure mapping from capitalized headers
-                transaction = {
-                    "id": str(row.get('ID', '')),
-                    "date": str(row.get('Date', '')),
-                    "description": str(row.get('Description', '')),
-                    "originalDescription": str(row.get('Original_Description', '')),
-                    "amount": amount_val,
-                    "type": str(row.get('Type','')),
-                    "category": str(row.get('Category', '')),
-                    "parentCategory": str(row.get('parentCategory', '')),
-                    "originalCategory": str(row.get('Original_Category','')),
-                    "account": str(row.get('Account', '')),
-                    # "tags": str(row.get("Tags")),
-                    "memo": str(row.get("Memo",'')),
-                    "pending": bool(row.get("Pending",''))
-                }
-                rows_list.append(transaction)
-                
+        # 
+        for row in transactions:
+            # Convert the capitalized AMOUNT header to a float safely
+            try:
+                amount_val = float(row[7])
+            except (ValueError, TypeError):
+                amount_val = 0.0  # Fallback if data is corrupted or missing
+
+            transaction = {
+                "id": str(row[0]),
+                "date": str(row[1]),
+                "description": str(row[2]),
+                "originalDescription": str(row[3]),
+                "category": str(row[4]),
+                "parentCategory": str(row[5]),
+                "originalCategory": str(row[6]),
+                "amount": amount_val,
+                "type": str(row[8]),
+                "account": str(row[9]),
+                # "tags": str(row[0]),
+                "memo": str(row[10]),
+                "pending": bool(row[11]),
+            }
+            rows_list.append(transaction)
+                              
+        # 
+        rows_list.sort(key=lambda x: x['date'], reverse=False)  # Sort by date in descending order
+        cursor.close()
         return jsonify({"rows": rows_list})
         
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"error": str(e)}), 500

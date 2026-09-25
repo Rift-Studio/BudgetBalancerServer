@@ -343,6 +343,7 @@ def main():
     # Save output
     # ==========================
 
+    updated_master = updated_master.drop(columns=["ID"])
     updated_master.to_csv(
         OUTPUT_FILE,
         index=False
@@ -358,10 +359,10 @@ def main():
         f"{len(updated_master)}"
     )
 
-    if ID_COLUMN is not None and ID_COLUMN in updated_master.columns:
-        print(
-            f"IDs: 1 through {len(updated_master)}"
-        )
+    # if ID_COLUMN is not None and ID_COLUMN in updated_master.columns:
+    #     print(
+    #         f"IDs: 1 through {len(updated_master)}"
+    #     )
 
 
 # ==========================

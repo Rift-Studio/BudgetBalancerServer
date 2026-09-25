@@ -1,3 +1,5 @@
+import hashlib
+
 import pandas as pd
 import glob
 import os
@@ -97,11 +99,13 @@ if dataframes:
     # --- NEW: UNIQUE ID GENERATION ---
     # Generate a unique ID for each transaction (e.g., '7b2c8a91')
     # master_df['ID'] = [f"{uuid.uuid4().hex[:8]}" for _ in range(len(master_df))]
-    master_df['ID'] = range(1, len(master_df) + 1)
-    
-    # Move the ID column to the front of the file for better readability
-    cols = ['ID'] + [col for col in master_df.columns if col != 'ID']
-    master_df = master_df[cols]
+    # master_df['ID'] = range(1, len(master_df) + 1)
+    # Hash the combination of user_id and email
+    # master_df["ID"] = master_df.apply(lambda row: hashlib.md5(f"{row['Date']}|{row['Description']}|{row['Amount']}|{row['Type']}".encode()).hexdigest(), axis=1)
+
+    # # Move the ID column to the front of the file for better readability
+    # cols = ['ID'] + [col for col in master_df.columns if col != 'ID']
+    # master_df = master_df[cols]
     # ----------------------------------
 
     # Optional: Clean the master data (e.g., remove currency symbols, handle NaNs)

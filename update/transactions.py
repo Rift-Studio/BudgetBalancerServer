@@ -1,5 +1,8 @@
+import email
 import subprocess
 import os
+from db.connect import get_db
+from db.update_txns import UPDATE_TRANSACTION_CATEGORY
 from scripts.update import update_transaction_category
 from flask import jsonify
 
@@ -33,26 +36,32 @@ def mergeNewTransactionsToMaster():
         }), 500
 
 # Locally save a new category for a specific transaction
-def updateCategoryForTransaction(new_category, transaction_id):
+def updateCategoryForTransaction(user_id, new_category, transaction_id):
     
     # Validate that both parameters were provided
-    if not transaction_id or not new_category:
+    if not transaction_id or not new_category or not user_id:
         return jsonify({
             "status": "error", 
-            "message": "Both 'id' and 'newCategory' parameters are required"
+            "message": "All parameters are required"
         }), 400
 
     try:
-        # Cast parameters explicitly to String and call your function
-        success = update_transaction_category(int(transaction_id), str(new_category))
-        
-        if success:
-            return jsonify({
-                "status": "success", 
-                "message": f"Transaction {transaction_id} updated to {new_category}"
-            })
-        else:
-            return jsonify({"status": "error", "message": "Transaction ID not found"}), 404
-            
+        db = get_db()
+        cursor = db.cursor()
+        print(f"Updating transaction {transaction_id} for user {user_id} to new category: {new_category}")
+        cursor.execute(UPDATE_TRANSACTION_CATEGORY, {
+            "new_category": str(new_category),
+            "user_id": str(user_id),
+            "transaction_id": str(transaction_id)
+        })
+        db.commit()
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+            db.rollback()
+            print(f"Error importing CSV: {e}")
+            return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+            cursor.close()
+            db.close()
+            return jsonify({"status": "success", "message": "Transaction updated successfully"}), 200
+
+        

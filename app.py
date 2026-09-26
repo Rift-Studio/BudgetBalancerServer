@@ -1,8 +1,9 @@
-from create.transactions import mergeUploadedTransactions
+from create.transactions import mergeUploadedTransactions, submitTransactionsToDB
 from create.users import createNewUser
 from read.transactions import getTransactions
 from read.budgets import getBudgets
 from read.users import getUserId
+from scripts.basicMerge import mergeCsv
 from update.transactions import updateCategoryForTransaction, mergeNewTransactionsToMaster
 from flask import Flask,g, request
 from dotenv import load_dotenv
@@ -55,9 +56,10 @@ def update_category_url_route():
     new_category = request.args.get('newCategory')
     return updateCategoryForTransaction(request.form.get('user_id'), new_category, transaction_id)
 
-@app.route('/append-new-transactions', methods=['GET'])
+@app.route('/submit-txns', methods=['POST'])
 def update_transactions_with_new_csv():
-    return mergeNewTransactionsToMaster()
+    mergeCsv()
+    return submitTransactionsToDB(request.form.get('user_id'))
 # --- UPDATE
 
 # Security ---

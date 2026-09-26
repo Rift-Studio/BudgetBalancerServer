@@ -110,6 +110,9 @@ if dataframes:
 
     # Optional: Clean the master data (e.g., remove currency symbols, handle NaNs)
     master_df['Amount'] = master_df['Amount'].astype(str).str.replace('$', '', regex=False)
+    # Strip the ® symbol and any trailing double spaces it might leave behind
+    master_df['Account'] = master_df['Account'].str.replace('®', '', regex=False).str.replace('  ', ' ', regex=False)
+
     # master_df['Short_Description'] = (
     #     master_df['Description']
     #     .astype(str)
